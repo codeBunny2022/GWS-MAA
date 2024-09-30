@@ -1,3 +1,4 @@
+// app/static/app/js/scripts.js
 document.addEventListener('DOMContentLoaded', function () {
     const taskForm = document.getElementById('task-form');
     const responseData = document.getElementById('response-data');

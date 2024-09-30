@@ -1,25 +1,40 @@
-{% extends 'app/base.html' %}
-
-{% block content %}
-<div class="container">
-    <form id="task-form">
-        <label for="task">Task Description:</label>
-        <textarea id="task" name="task" rows="4" required></textarea>
-        
-        <label for="workspace-content">Workspace Content:</label>
-        <textarea id="workspace-content" name="workspace_content" rows="4" required></textarea>
-        
-        <input type="hidden" id="already-done" name="already_done" value="None">
-        <input type="hidden" id="prompt-history" name="prompt_history" value="None">
-        <input type="hidden" id="current-service-url" name="current_service_url" value="None">
-        <input type="hidden" id="service-history" name="service_history" value="None">
-        
-        <button type="submit">Send</button>
-    </form>
-    
-    <div id="response">
-        <h2>Response</h2>
-        <pre id="response-data"></pre>
-    </div>
-</div>
-{% endblock %}
+<!-- app/templates/app/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Workspace Assistant</title>
+    <link rel="stylesheet" href="{% static 'app/css/styles.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Google Workspace Assistant</h1>
+    </header>
+    <main>
+        <div class="container">
+            <form id="task-form">
+                <label for="task">Task Description:</label>
+                <textarea id="task" name="task" rows="4" required></textarea>
+                
+                <label for="workspace-content">Workspace Content:</label>
+                <textarea id="workspace-content" name="workspace_content" rows="4" required></textarea>
+                
+                <input type="hidden" id="already-done" name="already_done" value="None">
+                <input type="hidden" id="prompt-history" name="prompt_history" value="None">
+                <input type="hidden" id="current-service-url" name="current_service_url" value="None">
+                <input type="hidden" id="service-history" name="service_history" value="None">
+                
+                <button type="submit">Send</button>
+            </form>
+            
+            <div id="response">
+                <h2>Response</h2>
+                <pre id="response-data"></pre>
+            </div>
+        </div>
+    </main>
+    <script src="{% static 'app/js/scripts.js' %}"></script>
+</body>
+</html>
