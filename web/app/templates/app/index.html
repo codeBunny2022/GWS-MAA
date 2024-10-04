@@ -1,40 +1,66 @@
-<!-- app/templates/app/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% load static %}
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Workspace Assistant</title>
+    <title>GWS-MAA Dashboard</title>
+    {% load static %}
     <link rel="stylesheet" href="{% static 'app/css/styles.css' %}">
 </head>
 <body>
     <header>
-        <h1>Google Workspace Assistant</h1>
+        <h1>GWS-MAA Dashboard</h1>
     </header>
-    <main>
-        <div class="container">
-            <form id="task-form">
-                <label for="task">Task Description:</label>
-                <textarea id="task" name="task" rows="4" required></textarea>
-                
-                <label for="workspace-content">Workspace Content:</label>
-                <textarea id="workspace-content" name="workspace_content" rows="4" required></textarea>
-                
-                <input type="hidden" id="already-done" name="already_done" value="None">
-                <input type="hidden" id="prompt-history" name="prompt_history" value="None">
-                <input type="hidden" id="current-service-url" name="current_service_url" value="None">
-                <input type="hidden" id="service-history" name="service_history" value="None">
-                
-                <button type="submit">Send</button>
-            </form>
-            
-            <div id="response">
-                <h2>Response</h2>
-                <pre id="response-data"></pre>
-            </div>
+    <main class="container">
+        <form id="taskForm" method="POST" action="/">
+
+            <label for="task">Task</label>
+            <input type="text" id="task" name="task" placeholder="Enter your task">
+
+            <label for="already_done">Already Done</label>
+            <input type="text" id="already_done" name="already_done" placeholder="Enter already done actions">
+
+            <label for="workspace_content">Workspace Content</label>
+            <textarea id="workspace_content" name="workspace_content" rows="4" placeholder="Describe the current workspace content"></textarea>
+
+            <label for="prompt_history">Prompt History</label>
+            <textarea id="prompt_history" name="prompt_history" rows="4" placeholder="Enter task history"></textarea>
+
+            <label for="current_service_url">Current Service URL</label>
+            <input type="text" id="current_service_url" name="current_service_url" placeholder="Enter current service URL">
+
+            <label for="service_history">Service History</label>
+            <textarea id="service_history" name="service_history" rows="4" placeholder="Enter service history"></textarea>
+
+            <button type="submit">Submit</button>
+        </form>
+        <div id="response">
+            <h2>Response</h2>
+            <pre id="responseContent"></pre>
         </div>
     </main>
-    <script src="{% static 'app/js/scripts.js' %}"></script>
-</body>
-</html>
+    <footer>
+        <p>&copy; 2023 GWS-MAA Dashboard. All Rights Reserved.</p>
+    </footer>
+    <script>
+        document.getElementById('taskForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = {};
+            formData.forEach((value, key) => data[key] = value);
+
+            fetch('/', {
+                method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('responseContent').textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        </script>
+    </body>
+    </html>

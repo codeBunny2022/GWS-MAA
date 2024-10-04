@@ -1,4 +1,6 @@
 # views.py
+
+import base64
 from django.shortcuts import render, redirect
 import os
 import re
@@ -13,10 +15,11 @@ from dotenv import load_dotenv
 from anthropic import Anthropic
 from django.utils.decorators import method_decorator
 from django.views import View
-from google_auth_oauthlib.flow import Flow
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
-
+from googleapiclient.errors import HttpError
 
 # Load environment variables
 load_dotenv()
@@ -30,6 +33,7 @@ if not claude_api_key:
 
 client = Anthropic(api_key=claude_api_key)
 
+# Define system prompt
 system_prompt = """
 # System Prompt/Custom Instructions
 
@@ -111,6 +115,7 @@ Provide a Python dictionary with two keys:
 - Do not give response without JSON or dictionary format.
 """
 
+# Define base prompt template
 base_prompt = """
 ## Visited Services History:
 
@@ -147,6 +152,7 @@ $$$WORKSPACE_CONTENT$$$
 ## YOUR CURRENT OBJECTIVE: $$task$$
 """
 
+# Function number mapping
 function_match_dict = {
     "open_gmail": 1,
     "send_email": 2,
@@ -163,6 +169,7 @@ function_match_dict = {
     "search_files": 13
 }
 
+# Function to build the prompt
 def build_prompt(task: str, already_done: str, workspace_content: str, prompt_history: str, current_service_url: str, service_history: str) -> str:
     prompt = base_prompt.replace("$$task$$", task)
     prompt = prompt.replace("$$already_done$$", already_done)
@@ -172,6 +179,7 @@ def build_prompt(task: str, already_done: str, workspace_content: str, prompt_hi
     prompt = prompt.replace("$$current_service_url$$", current_service_url)
     return prompt
 
+# Function to extract list from string
 def extract_list_from_string(text: str):
     text = text.replace("\n", "")
     pattern = r'\[.*?\]'
@@ -184,6 +192,7 @@ def extract_list_from_string(text: str):
     else:
         return []
 
+# Function to get a dictionary from a string
 def get_dict(your_string: str):
     your_string = your_string.replace("```", "'")
     your_string = your_string.replace("null", "None")
@@ -202,6 +211,7 @@ def get_dict(your_string: str):
     else:
         return {}
 
+# Function to extract function details
 def extract_function_details(s: str):
     pattern = r'(\w+)\((.*)\)'
     match = re.match(pattern, s, re.DOTALL)
@@ -217,13 +227,16 @@ def extract_function_details(s: str):
     else:
         return None, None
 
+# Function to get function number
 def get_function_number(function_name: str):
     return function_match_dict.get(function_name, -1)
 
+# Function to clean arguments
 def clean_arguments(argument: str) -> str:
-    argument = argument.replace("'", '').replace('"', '').replace("\\n", "\n").strip()
+    argument = argument.replace("'", "").replace('"', "").replace("\\n", "\n").strip()
     return argument
 
+# Function to get response from Claude
 def get_response_from_claude(prompt: str):
     logger.info("Requesting response from Claude...")
     ts = time.time()
@@ -240,16 +253,17 @@ def get_response_from_claude(prompt: str):
                     "content": [
                         {"type": "text", "text": prompt}
                     ]
-                },
+                }
             ]
         )
         te = time.time()
-        logger.info("Response from Claude received in %.2fs", te - ts)
+        logger.info("Response from Claude received in %.2f s", te - ts)
         return response.content[0].text
     except Exception as e:
         logger.error("Error requesting response from Claude: %s", e)
         raise
 
+# Function to get answer from Claude
 def get_answer(task, already_done, workspace_content, prompt_history, current_service_url, service_history):
     prompt = build_prompt(task, already_done, workspace_content, prompt_history, current_service_url, service_history)
     response = get_response_from_claude(prompt)
@@ -269,40 +283,44 @@ def get_answer(task, already_done, workspace_content, prompt_history, current_se
             "arguments": [clean_arguments(argument) for argument in arguments]
         }
         response_data.append(temp)
-    return response_data, [{"thought": response_dict.get("thought"), "actions": [clean_arguments(function) for function in list_of_functions]}], response_dict.get("thought")
+    return response_data, [{
+        "thought": response_dict.get("thought"),
+        "actions": [clean_arguments(function) for function in list_of_functions]
+    }], response_dict.get("thought")
 
-
+# OAuth 2.0 scopes
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.send',
     'https://www.googleapis.com/auth/drive.file',
     'https://www.googleapis.com/auth/calendar'
 ]
 
+# OAuth 2.0 login
 def oauth2_login(request):
     flow = Flow.from_client_secrets_file(
-        'path/to/client_secret.json',         # here we have to add the json file with client secret
+        'path/to/your/client_secret.json',
         scopes=SCOPES,
         redirect_uri='http://127.0.0.1:8000/oauth2callback/'
     )
-
     auth_url, state = flow.authorization_url(prompt='consent')
     request.session['state'] = state
     return redirect(auth_url)
 
+# OAuth 2.0 callback
 def oauth2_callback(request):
     state = request.session['state']
     flow = Flow.from_client_secrets_file(
-        'path/to/client_secret.json',               # here as well add the client secret json file path
+        'path/to/your/client_secret.json',
         scopes=SCOPES,
         state=state,
         redirect_uri='http://127.0.0.1:8000/oauth2callback/'
     )
     flow.fetch_token(authorization_response=request.build_absolute_uri())
-
     credentials = flow.credentials
     request.session['credentials'] = credentials_to_dict(credentials)
     return redirect('/')
 
+# Function to convert credentials to dictionary
 def credentials_to_dict(credentials):
     return {
         'token': credentials.token,
@@ -313,6 +331,7 @@ def credentials_to_dict(credentials):
         'scopes': credentials.scopes
     }
 
+# Function to send Gmail
 def send_gmail(credentials, recipient, subject, body):
     service = build('gmail', 'v1', credentials=credentials)
     message = {
@@ -321,6 +340,7 @@ def send_gmail(credentials, recipient, subject, body):
     sent_message = service.users().messages().send(userId="me", body=message).execute()
     return sent_message
 
+# View to handle POST and GET requests
 @method_decorator(csrf_exempt, name='dispatch')
 class GetResponseView(View):
     def post(self, request, *args, **kwargs):
@@ -340,7 +360,6 @@ class GetResponseView(View):
             service_history = data["service_history"]
             logger.info("Received POST data: %s", data)
             
-            # Check if the user's credentials are available
             if 'credentials' not in request.session:
                 return redirect('oauth2login')
             credentials = Credentials(**request.session['credentials'])

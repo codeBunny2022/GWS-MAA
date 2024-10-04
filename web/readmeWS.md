@@ -101,3 +101,7 @@ This basic setup allows you to simulate task execution using the Claude language
  pip install google-auth google-auth-oauthlib google-auth-httplib2
 ```
 
+now to collect static files
+```
+python3 manage.py collectstatic
+```

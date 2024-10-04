@@ -1,80 +1,68 @@
-/* app/static/app/css/styles.css */
+/* styles.css */
+
+/* General Settings */
 body {
-    font-family: Arial, sans-serif;
     background-color: #121212;
-    color: #E0E0E0;
+    color: #FFFFFF;
+    font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
 }
 
-header {
-    background-color: #1f1f1f;
-    color: #FFA500;
-    padding: 20px 0;
-    text-align: center;
-}
-
 .container {
-    margin: 40px auto;
+    max-width: 800px;
+    margin: 0 auto;
     padding: 20px;
-    background-color: #1e1e1e;
+}
+
+header {
+    text-align: center;
+    padding: 20px 0;
+}
+
+header h1 {
+    color: #FF9800;
+}
+
+form {
+    background-color: #1E1E1E;
+    padding: 20px;
     border-radius: 5px;
-    width: 80%;
-    max-width: 600px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
 
-label {
+form label {
     display: block;
-    margin: 10px 0 5px;
-    font-size: 14px;
-    color: #FFA500;
+    margin-bottom: 10px;
 }
 
-textarea {
+form input, form textarea {
     width: 100%;
     padding: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #333;
-    border-radius: 4px;
-    background-color: #2b2b2b;
-    color: #E0E0E0;
-    font-size: 14px;
+    margin-bottom: 10px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background-color: #333;
+    color: white;
 }
 
-button {
-    background-color: #FFA500;
-    color: #121212;
-    padding: 10px 20px;
+form button {
+    background-color: #FF9800;
+    color: #FFFFFF;
+    padding: 10px 15px;
     border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 16px;
 }
 
-button:hover {
-    background-color: #ff8800;
+form button:hover {
+    background-color: #E67E22;
 }
 
-#response {
-    margin-top: 20px;
-    background-color: #2b2b2b;
-    padding: 20px;
-    border-radius: 4px;
-    border: 1px solid #333;
+footer {
+    text-align: center;
+    padding: 20px 0;
 }
 
-#response h2 {
-    color: #FFA500;
-    margin-top: 0;
-}
-
-pre {
-    background-color: #1e1e1e;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #333;
-    color: #E0E0E0;
-    font-size: 14px;
-    overflow: auto;
+footer p {
+    color: #777;
 }
