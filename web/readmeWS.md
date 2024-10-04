@@ -91,4 +91,13 @@ You can use libraries like google-auth, google-auth-oauthlib, and google-auth-ht
 
 Conclusion
 
-This basic setup allows you to simulate task execution using the Claude language model. For real-world tasks, especially those involving sensitive actions like sending emails or creating calendar events, OAuth 2.0 authentication and Google API integration are necessary.	
+This basic setup allows you to simulate task execution using the Claude language model. For real-world tasks, especially those involving sensitive actions like sending emails or creating calendar events, OAuth 2.0 authentication and Google API integration are necessary.
+
+
+
+## OAuth authentication feature added
+
+```
+ pip install google-auth google-auth-oauthlib google-auth-httplib2
+```
+

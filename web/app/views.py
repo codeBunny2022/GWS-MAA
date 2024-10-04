@@ -1,5 +1,5 @@
 # views.py
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import os
 import re
 import ast
@@ -7,13 +7,16 @@ import json
 import time
 import logging
 import datetime
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from dotenv import load_dotenv
 from anthropic import Anthropic
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.http import HttpResponseBadRequest
+from google_auth_oauthlib.flow import Flow
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
 
 # Load environment variables
 load_dotenv()
@@ -183,7 +186,7 @@ def extract_list_from_string(text: str):
 
 def get_dict(your_string: str):
     your_string = your_string.replace("```", "'")
-    your_string is your_string.replace("null", "None")
+    your_string = your_string.replace("null", "None")
     your_string = your_string.replace("false", "False")
     your_string = your_string.replace("true", "True")
     pattern = r'\{(?:[^{}]|(?!\}).)*\}'
@@ -268,6 +271,56 @@ def get_answer(task, already_done, workspace_content, prompt_history, current_se
         response_data.append(temp)
     return response_data, [{"thought": response_dict.get("thought"), "actions": [clean_arguments(function) for function in list_of_functions]}], response_dict.get("thought")
 
+
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/calendar'
+]
+
+def oauth2_login(request):
+    flow = Flow.from_client_secrets_file(
+        'path/to/client_secret.json',         # here we have to add the json file with client secret
+        scopes=SCOPES,
+        redirect_uri='http://127.0.0.1:8000/oauth2callback/'
+    )
+
+    auth_url, state = flow.authorization_url(prompt='consent')
+    request.session['state'] = state
+    return redirect(auth_url)
+
+def oauth2_callback(request):
+    state = request.session['state']
+    flow = Flow.from_client_secrets_file(
+        'path/to/client_secret.json',               # here as well add the client secret json file path
+        scopes=SCOPES,
+        state=state,
+        redirect_uri='http://127.0.0.1:8000/oauth2callback/'
+    )
+    flow.fetch_token(authorization_response=request.build_absolute_uri())
+
+    credentials = flow.credentials
+    request.session['credentials'] = credentials_to_dict(credentials)
+    return redirect('/')
+
+def credentials_to_dict(credentials):
+    return {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes
+    }
+
+def send_gmail(credentials, recipient, subject, body):
+    service = build('gmail', 'v1', credentials=credentials)
+    message = {
+        'raw': base64.urlsafe_b64encode(f"To: {recipient}\r\nSubject: {subject}\r\n\r\n{body}".encode()).decode()
+    }
+    sent_message = service.users().messages().send(userId="me", body=message).execute()
+    return sent_message
+
 @method_decorator(csrf_exempt, name='dispatch')
 class GetResponseView(View):
     def post(self, request, *args, **kwargs):
@@ -287,6 +340,11 @@ class GetResponseView(View):
             service_history = data["service_history"]
             logger.info("Received POST data: %s", data)
             
+            # Check if the user's credentials are available
+            if 'credentials' not in request.session:
+                return redirect('oauth2login')
+            credentials = Credentials(**request.session['credentials'])
+
             response, already_completed_new, thought = get_answer(
                 task, already_done, workspace_content, prompt_history, current_service_url, service_history
             )
