@@ -1,5 +1,3 @@
-# views.py
-
 import base64
 from django.shortcuts import render, redirect
 import os
