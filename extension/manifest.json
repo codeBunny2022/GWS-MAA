@@ -1,0 +1,18 @@
+{
+    "manifest_version": 3,
+    "name": "GWSMAA Chrome Extension",
+    "version": "1.0",
+    "description": "Google Workspace Multi-Action Agent",
+    "permissions": ["activeTab", "scripting", "storage"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "icons": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  }
